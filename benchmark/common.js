@@ -57,13 +57,11 @@ function format(conf) {
 
 class Benchmark {
   #main;
-  #configs;
   #start;
   #name;
 
   constructor(main, configs, options = {}) {
     this.#main = main;
-    this.#configs = configs;
     this.#name = path.relative(__dirname, require.main.filename);
     const args = parseArgs(process.argv.slice(2));
 
