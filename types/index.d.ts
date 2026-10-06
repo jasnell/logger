@@ -164,21 +164,6 @@ declare namespace create {
     flushSync(): void;
   }
 
-  /**
-   * Maps channel names to selectors, or routes a level to a channel name
-   * (or `undefined` to disable the event).
-   */
-  type DiagnosticsProviderChannels =
-    | { [channel: string | symbol]: (level: Level) => unknown }
-    | ((level: Level) => string | symbol | undefined);
-
-  /** Publishes log events to diagnostics channels. */
-  class DiagnosticsProvider implements Provider {
-    constructor(channels: DiagnosticsProviderChannels);
-    isEnabled(level: Level): boolean;
-    log(event: LogEvent): void;
-  }
-
   interface EventProviderOptions {
     /** The minimum enabled level. **Default:** `'trace'`. */
     level?: LevelInput | undefined;

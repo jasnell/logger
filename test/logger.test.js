@@ -29,12 +29,15 @@ function assertNullPrototypeEqual(actual, expected) {
 }
 
 test('module exports create() with properties', () => {
+  assert.deepStrictEqual(Object.keys(create).sort(), [
+    'AggregateProvider', 'ConsoleProvider', 'EventProvider', 'Logger',
+    'create', 'getDefaultProvider', 'levels', 'setDefaultProvider',
+  ]);
   assert.strictEqual(typeof loggerModule, 'function');
   assert.strictEqual(loggerModule, create);
   for (const name of ['AggregateProvider', 'ConsoleProvider',
-                      'DiagnosticsProvider', 'EventProvider', 'Logger',
-                      'create', 'getDefaultProvider', 'levels',
-                      'setDefaultProvider']) {
+                      'EventProvider', 'Logger', 'create',
+                      'getDefaultProvider', 'levels', 'setDefaultProvider']) {
     assert.ok(Object.hasOwn(create, name), name);
     assert.ok(Object.getOwnPropertyDescriptor(create, name).enumerable);
   }

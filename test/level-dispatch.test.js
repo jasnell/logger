@@ -5,7 +5,6 @@
 // observable, and that they are re-resolved when the enablement changes.
 
 const assert = require('node:assert');
-const { channel } = require('node:diagnostics_channel');
 const { setImmediate: sleep } = require('node:timers/promises');
 const { test } = require('node:test');
 const { setFlagsFromString } = require('node:v8');
@@ -14,7 +13,6 @@ const { mustCall } = require('./common');
 const {
   AggregateProvider,
   ConsoleProvider,
-  DiagnosticsProvider,
   EventProvider,
   Logger,
   create,
@@ -134,19 +132,6 @@ test('unobservable providers are checked on every call', (t) => {
   logger.info('discarded');
   enabled = true;
   logger.info('delivered');
-});
-
-test('DiagnosticsProvider is checked on every call', (t) => {
-  const target = channel('test:logger:dispatch');
-  const logger = create(new DiagnosticsProvider({
-    'test:logger:dispatch': () => true,
-  }));
-  assertEnabled(logger, levelNames);
-  const onEvent = mustCall(t);
-  target.subscribe(onEvent);
-  logger.info('delivered');
-  target.unsubscribe(onEvent);
-  logger.info('discarded');
 });
 
 test('overriding isEnabled() on a built-in provider opts out', () => {

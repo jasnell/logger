@@ -3,7 +3,6 @@ import { tracingChannel } from 'node:diagnostics_channel';
 import create, {
   AggregateProvider,
   ConsoleProvider,
-  DiagnosticsProvider,
   EventProvider,
   Logger,
   getDefaultProvider,
@@ -52,9 +51,6 @@ new ConsoleProvider({ destination: 'file' });
 const eventProvider = new EventProvider({ level: 'trace' });
 eventProvider.on('log', (event: LogEvent) => event.message);
 eventProvider.on('warn', (event) => event.level.value);
-
-new DiagnosticsProvider({ 'app:log': (lvl) => lvl.value >= 30 });
-new DiagnosticsProvider((lvl) => (lvl.name === 'error' ? 'app:error' : undefined));
 
 const custom: Provider = {
   isEnabled(lvl: Level, context?: LoggerContext) {

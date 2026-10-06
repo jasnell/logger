@@ -390,43 +390,6 @@ write is in progress: depending on the Node.js version, [`fs.Utf8Stream`][]
 either throws an `ERR_INVALID_STATE` error or may interleave output in that
 case.
 
-## Class: `DiagnosticsProvider`
-
-The `DiagnosticsProvider` publishes enabled log events to
-[`diagnostics_channel`][] channels. Events are only enabled for channels that
-have subscribers.
-
-### `new DiagnosticsProvider(channels)`
-
-* `channels` {Object|Function} A channel mapping or routing function.
-
-When `channels` is an object, each own string or symbol property is a channel
-name and its value is a selector function that receives a level descriptor. The
-event is published to every subscribed channel whose selector returns a truthy
-value.
-
-When `channels` is a function, it receives a level descriptor and returns the
-string or symbol name of the channel to publish to. Returning `undefined`
-disables the event. The selected channel must have subscribers for the event to
-be enabled.
-
-`DiagnosticsProvider.isEnabled()` invokes the routing function to resolve its
-channel. For a channel mapping, it invokes selectors only for channels that
-currently have subscribers and stops after the first matching selector. When an
-event is enabled, the applicable routing function or selectors are invoked
-again immediately before publishing it. These functions must not rely on being
-called exactly once.
-
-```cjs
-const { DiagnosticsProvider, create, levels } = require('@nodejs/logger');
-
-const provider = new DiagnosticsProvider({
-  'application:log': () => true,
-  'application:error': (level) => level.value >= levels.error.value,
-});
-const logger = create(provider);
-```
-
 ## Class: `EventProvider`
 
 * Extends: {EventEmitter}
@@ -562,7 +525,6 @@ Immutable descriptors for the built-in levels:
 [`JSON.stringify()`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify
 [`TracingChannel`]: https://nodejs.org/api/diagnostics_channel.html#class-tracingchannel
 [`channel.bindStore()`]: https://nodejs.org/api/diagnostics_channel.html#channelbindstorestore-transform
-[`diagnostics_channel`]: https://nodejs.org/api/diagnostics_channel.html
 [`fs.Utf8Stream`]: https://nodejs.org/api/fs.html#class-fsutf8stream
 [`logger.create()`]: #loggercreateprovider-options
 [`logger.getDefaultProvider()`]: #loggergetdefaultprovider

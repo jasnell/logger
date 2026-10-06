@@ -83,7 +83,6 @@ setDefaultProvider(new ConsoleProvider({ level: 'debug', destination: 'stderr' }
 * `ConsoleProvider`: Writes newline-delimited JSON (or the output of a custom
   serializer) to stdout or stderr using `fs.Utf8Stream`.
 * `EventProvider`: An `EventEmitter` that emits events.
-* `DiagnosticsProvider`: Publishes events to `diagnostics_channel` channels.
 * `AggregateProvider`: Fans events out to multiple providers.
 
 A provider is any object with a synchronous `log(event, context)` method, and
