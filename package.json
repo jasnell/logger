@@ -33,11 +33,13 @@
     "node": ">=24.6.0"
   },
   "scripts": {
-    "test": "node --test",
-    "test:types": "tsc -p test/types"
+    "test": "node --test \"test/*.test.{js,mjs}\"",
+    "test:types": "tsc -p test/types",
+    "bench": "node benchmark/run.js"
   },
   "devDependencies": {
     "@types/node": "^24.19.1",
+    "pino": "^10.4.0",
     "typescript": "^7.0.2"
   }
 }
