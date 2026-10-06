@@ -1,0 +1,28 @@
+{
+  "name": "@nodejs/logger",
+  "version": "0.0.0",
+  "description": "Structured logging facade for Node.js with pluggable providers",
+  "license": "MIT",
+  "author": "Node.js contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nodejs/logger.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nodejs/logger/issues"
+  },
+  "homepage": "https://github.com/nodejs/logger#readme",
+  "keywords": [
+    "logger",
+    "logging",
+    "structured-logging",
+    "json",
+    "diagnostics_channel"
+  ],
+  "engines": {
+    "node": ">=24.6.0"
+  },
+  "scripts": {
+    "test": "node --test"
+  }
+}
