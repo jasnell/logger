@@ -19,6 +19,7 @@
     "json",
     "diagnostics_channel"
   ],
+  "main": "./lib/logger.js",
   "engines": {
     "node": ">=24.6.0"
   },
