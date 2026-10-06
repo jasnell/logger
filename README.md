@@ -140,6 +140,10 @@ Library code uses the built-ins captured in `lib/internal/primordials.js`,
 following the conventions of Node.js core, so that it can be vendored into
 Node.js.
 
+## Code of Conduct
+
+This project follows the [Node.js Code of Conduct](./CODE_OF_CONDUCT.md).
+
 ## License
 
 [MIT](./LICENSE)
