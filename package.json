@@ -20,8 +20,10 @@
     "diagnostics_channel"
   ],
   "main": "./lib/logger.js",
+  "types": "./types/index.d.ts",
   "exports": {
     ".": {
+      "types": "./types/index.d.ts",
       "import": "./lib/logger.mjs",
       "require": "./lib/logger.js"
     },
@@ -31,6 +33,11 @@
     "node": ">=24.6.0"
   },
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "test:types": "tsc -p test/types"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.1",
+    "typescript": "^7.0.2"
   }
 }
