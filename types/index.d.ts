@@ -122,17 +122,19 @@ declare namespace create {
     /** The minimum enabled level. **Default:** `'info'`. */
     level?: LevelInput | undefined;
     /**
-     * The maximum internal buffer length. Writes that would exceed it are
-     * dropped. **Default:** `0`, for no limit.
+     * The maximum number of characters to buffer. Records are written before
+     * the buffer would exceed it, and a longer record is dropped.
+     * **Default:** `0`, for no limit.
      */
     maxLength?: number | undefined;
     /**
-     * The minimum internal buffer length before an automatic flush.
-     * **Default:** `0`.
+     * When greater than `0`, records are buffered until at least this many
+     * characters are, instead of being written at the end of each turn of the
+     * event loop. Must be less than 1 MiB. **Default:** `0`.
      */
     minLength?: number | undefined;
     /**
-     * The interval in milliseconds at which the stream is flushed.
+     * The interval in milliseconds at which buffered records are written.
      * **Default:** `0`, for no periodic flush.
      */
     periodicFlush?: number | undefined;
@@ -143,11 +145,17 @@ declare namespace create {
     pid?: boolean | undefined;
     /** Serializes a log record to a string. **Default:** A JSON serializer. */
     serializer?: ((record: LogRecord) => string) | undefined;
-    /** Whether writes are synchronous. **Default:** `false`. */
+    /**
+     * Whether each record is written as soon as it is logged, rather than at
+     * the end of the turn of the event loop. **Default:** `false`.
+     */
     sync?: boolean | undefined;
   }
 
-  /** Writes serialized log events to stdout or stderr. */
+  /**
+   * Writes serialized log events to stdout or stderr, in synchronous batches
+   * that do not interleave with batches written by other threads.
+   */
   class ConsoleProvider implements Provider {
     constructor(options?: ConsoleProviderOptions);
     readonly destination: 'stdout' | 'stderr';
@@ -157,10 +165,16 @@ declare namespace create {
     set level(level: LevelInput);
     readonly pid: boolean;
     readonly serializer: (record: LogRecord) => string;
+    /** The underlying stream, used in synchronous mode. */
     readonly stream: Utf8Stream;
     isEnabled(level: Level): boolean;
     log(event: LogEvent, context?: LoggerContext): void;
-    flush(callback?: (err?: Error | null) => void): void;
+    /**
+     * Writes buffered records synchronously, then calls `callback`
+     * asynchronously with `null` or the write error.
+     */
+    flush(callback?: (err: Error | null) => void): void;
+    /** Writes buffered records synchronously. Throws write errors. */
     flushSync(): void;
   }
 

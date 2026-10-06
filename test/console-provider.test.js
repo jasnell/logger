@@ -210,6 +210,29 @@ test('option validation', () => {
     () => new ConsoleProvider({ pid: 1 }),
     { code: 'ERR_INVALID_ARG_TYPE' },
   );
+  assert.throws(
+    () => new ConsoleProvider({ sync: 1 }),
+    { code: 'ERR_INVALID_ARG_TYPE' },
+  );
+  for (const name of ['maxLength', 'minLength', 'periodicFlush']) {
+    assert.throws(
+      () => new ConsoleProvider({ [name]: -1 }),
+      { code: 'ERR_OUT_OF_RANGE' },
+    );
+    assert.throws(
+      () => new ConsoleProvider({ [name]: 1.5 }),
+      { code: 'ERR_OUT_OF_RANGE' },
+    );
+    assert.throws(
+      () => new ConsoleProvider({ [name]: '1' }),
+      { code: 'ERR_INVALID_ARG_TYPE' },
+    );
+  }
+  assert.throws(
+    () => new ConsoleProvider({ minLength: 1024 * 1024 - 1 }),
+    { code: 'ERR_OUT_OF_RANGE' },
+  );
+  new ConsoleProvider({ minLength: 1024 * 1024 - 2 });
 
   const provider = new ConsoleProvider();
   assert.throws(
@@ -230,9 +253,6 @@ test('serializer must return a string', () => {
   );
 });
 
-// The exact timing of the flush() callback, and flushSync() throwing while an
-// asynchronous write is in progress, depend on fs.Utf8Stream fixes landing in
-// Node.js core (nodejs/node#66473), so they are not asserted here.
 test('asynchronous flush', () => {
   const result = runScript(`
     const assert = require('node:assert');

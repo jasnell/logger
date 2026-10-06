@@ -116,10 +116,10 @@ export default [
     rules: {
       'no-restricted-globals': [
         'error',
-        'Array', 'ArrayBuffer', 'BigInt', 'Boolean', 'DataView', 'Date',
+        'Array', 'ArrayBuffer', 'Atomics', 'BigInt', 'Boolean', 'DataView', 'Date',
         'Error', 'EvalError', 'Function', 'JSON', 'Map', 'Math', 'Number',
-        'Object', 'Promise', 'Proxy', 'RangeError', 'ReferenceError',
-        'Reflect', 'RegExp', 'Set', 'String', 'Symbol', 'SyntaxError',
+        'Int32Array', 'Object', 'Promise', 'Proxy', 'RangeError', 'ReferenceError',
+        'Reflect', 'RegExp', 'Set', 'SharedArrayBuffer', 'String', 'Symbol', 'SyntaxError',
         'TypeError', 'URIError', 'WeakMap', 'WeakRef', 'WeakSet',
       ],
     },

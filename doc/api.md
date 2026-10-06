@@ -287,7 +287,7 @@ The frozen provider list. The provider objects themselves are not frozen.
 ## Class: `ConsoleProvider`
 
 The `ConsoleProvider` serializes each event and writes it followed by a newline
-using [`fs.Utf8Stream`][]. Events are serialized as JSON by default.
+to stdout or stderr. Events are serialized as JSON by default.
 
 ### `new ConsoleProvider([options])`
 
@@ -297,17 +297,21 @@ using [`fs.Utf8Stream`][]. Events are serialized as JSON by default.
   * `flatten` {boolean} Whether to copy bindings and attributes into the
     top-level serialized record. **Default:** `false`.
   * `level` {string|Object} The minimum enabled level. **Default:** `'info'`.
-  * `maxLength` {number} The maximum internal buffer length. Writes that would
-    exceed this value are dropped. **Default:** `0`, for no limit.
-  * `minLength` {number} The minimum internal buffer length before an automatic
-    flush. **Default:** `0`.
-  * `periodicFlush` {number} The interval in milliseconds at which the stream
-    is flushed. **Default:** `0`, for no periodic flush.
+  * `maxLength` {number} The maximum number of characters to buffer. Records
+    are written before the buffer would exceed it, and a record longer than
+    `maxLength` by itself is dropped. **Default:** `0`, for no limit.
+  * `minLength` {number} When greater than `0`, records are buffered until at
+    least this many characters are, and are not written at the end of each
+    turn of the event loop. Must be less than 1 MiB. **Default:** `0`.
+  * `periodicFlush` {number} The interval in milliseconds at which buffered
+    records are written. Useful with `minLength`. **Default:** `0`, for no
+    periodic flush.
   * `pid` {boolean} Whether to add the process ID as a top-level `pid` property
     to serialized records. **Default:** `false`.
   * `serializer` {Function} A function that receives a log record and returns
     a string. **Default:** A JSON serializer.
-  * `sync` {boolean} Whether writes are synchronous. **Default:** `false`.
+  * `sync` {boolean} Whether each record is written as soon as it is logged.
+    **Default:** `false`.
 
 When `flatten` is `true`, bindings are copied into the top-level record first,
 followed by attributes. Attributes therefore replace bindings with the same
@@ -338,6 +342,66 @@ const { inspect } = require('node:util');
 const logger = create(new ConsoleProvider({ serializer: inspect }));
 logger.info('started', { processId: 1n });
 ```
+
+### Writing records
+
+Records are buffered, then written synchronously, in a single batch:
+
+* By default, at the end of the current turn of the event loop, or as soon as
+  32 KiB of records are buffered.
+* With `sync`, as soon as each record is logged.
+* With `minLength`, once that many characters are buffered, or on
+  `periodicFlush`.
+* When [`consoleProvider.flush()`][] or [`consoleProvider.flushSync()`][] is
+  called.
+* When the process or worker thread exits, including through
+  `process.exit()`. Records logged from `'exit'` listeners are written
+  immediately.
+
+Since writes are synchronous, they block the thread while the destination is
+not accepting data, for example while a pipe is full because its reader is
+slow. Records are never written from another thread, and are never dropped
+because the destination is slow.
+
+Records still buffered when a worker is stopped with [`worker.terminate()`][]
+are lost.
+
+#### Worker threads
+
+Each thread has its own default provider, and its own `ConsoleProvider`
+instances. Records written by different threads never interleave, whatever
+their size and whatever stdout or stderr refers to. Without coordination, the
+operating system only guarantees that small writes to pipes are not interleaved
+(up to 4096 bytes on Linux and 512 bytes on macOS), and records split across
+writes can be corrupted.
+
+When `@nodejs/logger` is loaded in the main thread, it creates a lock shared
+with every worker created afterwards, including nested workers. Each thread
+takes it while writing a batch to stdout or stderr directly. **For the best
+performance, load `@nodejs/logger` in the main thread before creating
+workers**, even if the main thread does not log:
+
+```cjs
+require('@nodejs/logger');
+const { Worker } = require('node:worker_threads');
+
+new Worker('./worker.js');
+```
+
+Workers created before that, and the workers they create, write their batches
+through their own `process.stdout` and `process.stderr` instead, which Node.js
+forwards to the main thread. This is slower, the batches are written
+asynchronously even with `sync`, and records still being forwarded when a
+worker is stopped with [`worker.terminate()`][] are lost. In the main thread,
+batches are queued after any data pending in `process.stdout` or
+`process.stderr`, such as forwarded output or `console.log()` output, rather
+than written directly.
+
+The lock covers both stdout and stderr, and is shared by every copy of the
+package that uses the same lock version. Other writers that use the file
+descriptors directly from other threads are not coordinated. If a thread stops
+while holding the lock, for example because of [`worker.terminate()`][], other
+threads take it over after 2 seconds.
 
 ### `consoleProvider.destination`
 
@@ -374,21 +438,24 @@ The configured serializer.
 
 * {fs.Utf8Stream}
 
-The underlying stream. Its `'drop'` event reports records dropped because of
-`maxLength`.
+The underlying [`fs.Utf8Stream`][], used in synchronous mode. Its `'drop'`
+event reports records dropped because of `maxLength`, and its `'error'` event
+reports write errors, synchronously with `sync` and asynchronously otherwise.
+Records that could not be written are discarded. Writing to the stream
+directly bypasses the provider's batching and stdio lock.
 
 ### `consoleProvider.flush([callback])`
 
-* `callback` {Function} Called when pending writes have completed.
+* `callback` {Function} Called with `null`, or the write error, once buffered
+  records are written.
 
-Flushes pending writes.
+Writes buffered records synchronously, then calls `callback` asynchronously.
+Without `callback`, a write error is emitted as an `'error'` event on
+[`consoleProvider.stream`][].
 
 ### `consoleProvider.flushSync()`
 
-Synchronously flushes pending writes. Avoid calling it while an asynchronous
-write is in progress: depending on the Node.js version, [`fs.Utf8Stream`][]
-either throws an `ERR_INVALID_STATE` error or may interleave output in that
-case.
+Writes buffered records synchronously. Throws write errors.
 
 ## Class: `EventProvider`
 
@@ -525,9 +592,13 @@ Immutable descriptors for the built-in levels:
 [`JSON.stringify()`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify
 [`TracingChannel`]: https://nodejs.org/api/diagnostics_channel.html#class-tracingchannel
 [`channel.bindStore()`]: https://nodejs.org/api/diagnostics_channel.html#channelbindstorestore-transform
+[`consoleProvider.flush()`]: #consoleproviderflushcallback
+[`consoleProvider.flushSync()`]: #consoleproviderflushsync
+[`consoleProvider.stream`]: #consoleproviderstream
 [`fs.Utf8Stream`]: https://nodejs.org/api/fs.html#class-fsutf8stream
 [`logger.create()`]: #loggercreateprovider-options
 [`logger.getDefaultProvider()`]: #loggergetdefaultprovider
 [`logger.setDefaultProvider()`]: #loggersetdefaultproviderprovider
 [`util.inspect()`]: https://nodejs.org/api/util.html#utilinspectobject-options
+[`worker.terminate()`]: https://nodejs.org/api/worker_threads.html#workerterminate
 [log event]: #log-events

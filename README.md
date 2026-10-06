@@ -78,10 +78,25 @@ const { setDefaultProvider, ConsoleProvider } = require('@nodejs/logger');
 setDefaultProvider(new ConsoleProvider({ level: 'debug', destination: 'stderr' }));
 ```
 
+### Worker threads
+
+Each worker thread has its own default provider. Records written by
+`ConsoleProvider`s in different threads never interleave. Loading
+`@nodejs/logger` in the main thread before creating workers lets them write
+directly, which is fastest:
+
+```js
+require('@nodejs/logger');
+const { Worker } = require('node:worker_threads');
+```
+
+See [Worker threads](./doc/api.md#worker-threads) for details.
+
 ### Providers
 
 * `ConsoleProvider`: Writes newline-delimited JSON (or the output of a custom
-  serializer) to stdout or stderr using `fs.Utf8Stream`.
+  serializer) to stdout or stderr, in synchronous batches written at the end
+  of each turn of the event loop and when the process exits.
 * `EventProvider`: An `EventEmitter` that emits events.
 * `AggregateProvider`: Fans events out to multiple providers.
 

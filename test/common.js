@@ -47,6 +47,7 @@ function runScript(script, execArgv = []) {
     script;
   return spawnSync(process.execPath, [...execArgv, '-e', source], {
     encoding: 'utf8',
+    maxBuffer: 64 * 1024 * 1024,
   });
 }
 
