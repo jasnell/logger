@@ -20,6 +20,13 @@
     "diagnostics_channel"
   ],
   "main": "./lib/logger.js",
+  "exports": {
+    ".": {
+      "import": "./lib/logger.mjs",
+      "require": "./lib/logger.js"
+    },
+    "./package.json": "./package.json"
+  },
   "engines": {
     "node": ">=24.6.0"
   },
