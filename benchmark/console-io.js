@@ -33,7 +33,9 @@ const smoke = process.env.NODEJS_LOGGER_BENCHMARK_SMOKE === '1';
 
 const defaults = {
   logger: ['node-logger'],
-  target: ['devnull', 'file', 'pipe', 'socket'],
+  target: process.platform === 'win32' ?
+    ['devnull', 'file', 'socket'] :
+    ['devnull', 'file', 'pipe', 'socket'],
   mode: ['async', 'sync'],
   workers: ['0', '4'],
   size: ['50', '2000'],

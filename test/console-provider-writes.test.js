@@ -153,7 +153,10 @@ test('pending records are written on process.exit() in a worker', () => {
   assert.strictEqual(check(result).length, 10000);
 });
 
-test('write errors are emitted on the stream', () => {
+// On Windows, libuv does not close fds 0-2, so writes to stdout keep working.
+test('write errors are emitted on the stream', {
+  skip: process.platform === 'win32' && 'stdout cannot be closed',
+}, () => {
   const result = runScript(`
     const assert = require('node:assert');
     const fs = require('node:fs');
