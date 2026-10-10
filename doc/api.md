@@ -155,7 +155,9 @@ provider without `isEnabled()` receives every event.
 
 Provider methods run synchronously in the logging call. Exceptions propagate to
 the caller. A provider that performs asynchronous work must enqueue or copy the
-event synchronously.
+event synchronously. A provider that serializes the `message` must either do so
+synchronously or do so on a copy of the `message` that was created
+synchronously.
 
 ## Class: `Logger`
 
